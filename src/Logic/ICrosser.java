@@ -14,9 +14,3 @@ public interface ICrosser {
     public String getLabelToBeShown();
 
 }
-interface ICrosseingStrategy{
-    public boolean isValid(List<ICrosser> rightBankCrossers, List<ICrosser> leftBankCrossers, List<ICrosser> boatRiders);
-    public List<ICrosser> getIntialICrossers();
-    public String[] getInstructions();
-
-}

@@ -68,6 +68,7 @@ public class CrossRiverButton extends Button {
         setOnMouseEntered(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
+
                 setEffect(new DropShadow());
             }
         });

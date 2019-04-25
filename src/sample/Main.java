@@ -8,12 +8,11 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        ViewManger manger = new ViewManger();
+        ViewManger manger = ViewManger.getInstance();
+                //new ViewManger();
         primaryStage = manger.getMainStage();
         primaryStage.show();
     }
-
-
     public static void main(String[] args) {
         launch(args);
     }
