@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface IRiverCrossingController {
     public void newGame (ICrosseingStrategy gameStrategy);
-    public void resetGame();
+    public void resetGame(int Case);
     public String[] getInstructions();
     public List<ICrosser> getCrossersOnRightBank();
     public List<ICrosser> getCrossersOnLeftBank();
@@ -18,6 +18,4 @@ public interface IRiverCrossingController {
     public void redo();
     public void saveGame();
     public void loadGame();
-
-
 }

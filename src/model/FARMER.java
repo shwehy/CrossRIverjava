@@ -1,10 +1,5 @@
 package model;
 
-import Logic.Farmer;
-import Logic.ICrosser;
-
-import java.awt.image.BufferedImage;
-
 public enum FARMER {
 
     MAN("view/resources/farmerChooser/IdleFarmer.png",

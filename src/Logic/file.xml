@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Data xmlns="alyelshwahy@yahoo.com">
+  <user1 STORYCASE="1">
+    <ListRight>Farmer</ListRight>
+    <ListRight>planet</ListRight>
+    <ListRight>Carnianimal</ListRight>
+    <ListRight>Herbanimal</ListRight>
+    <ListBoat>empty</ListBoat>
+    <Scores>0</Scores>
+    <ISLEFT>true</ISLEFT>
+  </user1>
+</Data>
