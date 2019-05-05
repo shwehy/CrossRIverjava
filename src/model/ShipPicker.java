@@ -4,9 +4,10 @@ import javafx.geometry.Pos;
 import javafx.scene.layout.VBox;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.control.Label;
 
 public class ShipPicker extends VBox {
-    private ImageView circleImage, shipImage,farmerImage,storyImage,herbImage,carnImage, plantsImage;
+    private ImageView circleImage, shipImage,farmerImage,storyImage,herbImage,carnImage, plantsImage,loadImage;
     private String circileNotChoosen = "view/resources/shipChooser/grey_circle.png";
     private String circileChoosen = "view/resources/shipChooser/green_boxTick.png";
     private static int i=0;
@@ -16,9 +17,11 @@ public class ShipPicker extends VBox {
     private HERBANIMAL herbanimal;
     private CARNANIMAL carnanimal;
     private PLANTS plants;
+    private LOAD load;
+    private Label name;
     private boolean isCircleChoosen;
 
-    public ShipPicker(STORY story, SHIP ship, int Case, FARMER farmer, HERBANIMAL herbanimal, CARNANIMAL carnanimal, PLANTS plants){
+    public ShipPicker(LOAD load, STORY story, SHIP ship, int Case, FARMER farmer, HERBANIMAL herbanimal, CARNANIMAL carnanimal, PLANTS plants){
         circleImage = new ImageView(circileNotChoosen);
         isCircleChoosen = false;
         if(Case==0){
@@ -88,6 +91,18 @@ public class ShipPicker extends VBox {
             this.getChildren().add(circleImage);
             this.getChildren().add(plantsImage);
         }
+        else if(Case==6){
+            loadImage = new ImageView(load.getUrl());
+            loadImage.setFitHeight(130);
+            loadImage.setFitWidth(130);
+            name = new Label(load.getName());
+            name.setStyle("-fx-text-fill: #000;-fx-font-size: 26px; font-weight: bold");
+            this.setSpacing(10);
+            this.load = load;
+            this.setAlignment(Pos.CENTER);
+            this.getChildren().add(circleImage);
+            this.getChildren().addAll(loadImage, name);
+        }
     }
     public SHIP getShip(){
         return ship;
@@ -107,6 +122,8 @@ public class ShipPicker extends VBox {
     public PLANTS getPlants(){
         return plants;
     }
+    public LOAD getLoad(){ return load;}
+
     public boolean getisCircleChoosen(){
         return isCircleChoosen;
     }

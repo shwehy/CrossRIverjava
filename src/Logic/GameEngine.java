@@ -1,6 +1,8 @@
 package Logic;
 
 
+import model.*;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
@@ -18,7 +20,7 @@ public class GameEngine implements IRiverCrossingController {
     private static GameEngine instance = null;
     public List<List<ICrosser>> Redo =  new LinkedList<List<ICrosser>>();
     public List<List<ICrosser>> Undo=  new LinkedList<List<ICrosser>>();
-
+   public ChangeManger manager = new ChangeManger();
         boolean s = false;
 
     public List<ICrosser> storyOneList = new LinkedList<ICrosser>();
@@ -55,8 +57,14 @@ public class GameEngine implements IRiverCrossingController {
             this.farmerC = new Farmer(0,60);
             this.farmerD = new Farmer(0,40);
             this.story2herbAnimal = new Herbanimal(20);
-
-            Story2Logic.getInstance().setObjects(this.farmerA,this.farmerB,this.farmerC,this.farmerD,this.story2herbAnimal);
+            FarmerStorage itra = new FarmerStorage();
+            itra.add(farmerA);
+            itra.add(farmerB);
+            itra.add(farmerC);
+            itra.add(farmerD);
+            FarmerItrator itrator = new FarmerItrator(itra.getFarmers());
+//            Story2Logic.getInstance().setObjects(this.farmerA,this.farmerB,this.farmerC,this.farmerD,this.story2herbAnimal);
+            Story2Logic.getInstance().setObjects(itrator.next(),itrator.next(),itrator.next(),itrator.next(),this.story2herbAnimal);
             this.storyOneList = Story2Logic.getInstance().getIntialICrossers();
             this.story1RightBankList.addAll(storyOneList);
             boatRiders = null;
@@ -94,9 +102,7 @@ public class GameEngine implements IRiverCrossingController {
 
     }
 
-    public String[] getInstructions() {
-        return new String[0];
-    }
+
 
     public List<ICrosser> getCrossersOnRightBank() {
         return this.story1RightBankList;
@@ -121,13 +127,20 @@ public class GameEngine implements IRiverCrossingController {
             return false;
         return true;
     }
+    public int numberSails;
+    public void setNumberOfSails(int x ){
+        numberSails = x;
+    }
 
     public int getNumberOfSails() {
-        return 0;
+        return numberSails;
     }
 
     public boolean canMove(List<ICrosser> crossers, boolean fromLeftTorightBank) {
-        return false;
+        if(isValidforBoat(boatRiders)&&fromLeftTorightBank)
+        return true;
+        else
+            return false;
     }
 
     public boolean doMove(List<ICrosser> crossers, boolean fromLeftTorightBank) {
@@ -148,28 +161,52 @@ public class GameEngine implements IRiverCrossingController {
 
     public void undo() {
         LinkedList<List<ICrosser>> Alist;
-        if(!UnDo.empty())
-        {
-            Alist= (LinkedList<List<ICrosser>>)UnDo.pop();
-            System.out.println("UndoSYSO"+Alist.get(0)+"222"+Alist.get(1));
-            this.ReDo.push((LinkedList<List<ICrosser>>)Alist);
-            Alist = null;
-        }
-        else
-            System.out.println("FADYYAAAA");
+//        if(!UnDo.empty())
+//        {
+//            Alist= (LinkedList<List<ICrosser>>) UnDo.pop();
+//            System.out.println("UndoSYSO"+Alist.get(0)+"222"+Alist.get(1));
+//            this.ReDo.push((LinkedList<List<ICrosser>>)Alist);
+//            Alist = null;
+//        }
+//        else
+//            System.out.println("FADYYAAAA");
+
+
+      //  manager.addChangeable(new test.CommandLineChanger(getCrossersOnRightBank()) );
+
+//        manager.addChangeable(new test.CommandLineChanger("2") );
+try {
+    manager.undo();
+}
+catch (Exception e){
+    System.out.println("Mynf34444");
+}
+        //manager.redo();
+
+       // manager.undo();
+
+       // manager.undo();
+
     }
 
     public void redo() {
-        LinkedList<List<ICrosser>> Alist ;
-        if(canReDo())
-        {
-            Alist= (LinkedList<List<ICrosser>>) ReDo.pop();
-            System.out.println("REDOSYSO"+Alist.get(0)+"222"+Alist.get(1));
-            UnDo.push( (LinkedList<List<ICrosser>>) Alist);
-            Alist =null;
+//        LinkedList<List<ICrosser>> Alist ;
+//        if(canReDo())
+//        {
+//            Alist= (LinkedList<List<ICrosser>>) ReDo.pop();
+//            System.out.println("REDOSYSO"+Alist.get(0)+"222"+Alist.get(1));
+//            UnDo.push( (LinkedList<List<ICrosser>>) Alist);
+//            Alist =null;
+//        }
+//        else
+//            System.out.println("FADYAAA");
+        try {
+            manager.redo();
         }
-        else
-            System.out.println("FADYAAA NEEEK");
+        catch (Exception e){
+        System.out.println("walahy maynf3");
+        }
+
     }
 
     public void saveGame() {
@@ -178,8 +215,11 @@ public class GameEngine implements IRiverCrossingController {
         s.File_Save();
 
     }
-    public void Set_Save_object(int type, List<ICrosser> left, List<ICrosser> right, List<ICrosser> boat, int score, boolean isLeft){
-        this.SAVEE = new SaveModel(type, left, right, boat,score, isLeft );
+    public void Set_Save_object(int type, List<ICrosser> left, List<ICrosser> right, List<ICrosser> boat, int score, boolean isLeft,
+                                SHIP choosenShip, FARMER choosenFarmer,
+                                HERBANIMAL choosenHerb, CARNANIMAL choosenCarn, PLANTS choosenPlants){
+        this.SAVEE = new SaveModel(type, left, right, boat,score, isLeft, choosenShip, choosenFarmer,
+                choosenHerb, choosenCarn, choosenPlants );
 
     }
     public SaveModel Get_Save_object(){
@@ -188,38 +228,48 @@ public class GameEngine implements IRiverCrossingController {
     public void loadGame() {
 
     }
-    public void  REDOLIST(List<ICrosser> rightBankCrossers, List<ICrosser> leftBankCrossers){
-        if(!s){
-            IniStacks();
+    public void  REDOLIST(List<ICrosser> rightBankCrossers, List<ICrosser> leftBankCrossers,List<ICrosser> onBoat){
+
+        List<ICrosser> temp ;
+        temp = new LinkedList<>();
+        for (int j = 0 ; j<rightBankCrossers.size();j++)
+            temp.add(rightBankCrossers.get(j));
+        List<ICrosser> temp2 ;
+        temp2 = new LinkedList<>();
+        for (int j = 0 ; j<leftBankCrossers.size();j++)
+            temp2.add(leftBankCrossers.get(j));
+        List<ICrosser> temp3 ;
+        temp3 = new LinkedList<>();
+//        System.out.println(onBoat+"ezzzzzay nulll");
+        try {
+            for (int j = 0; j < onBoat.size(); j++)
+                temp3.add(onBoat.get(j));
         }
-        else{
-//         List<List<ICrosser>> Alist = new LinkedList<>();
-//         Alist.add(rightBankCrossers);
-//         Alist.add(leftBankCrossers);
+        catch (NullPointerException e ){
+            System.out.println("Aarry null 3ala el boat");
 
-        UnDo.push(rightBankCrossers);
-        UnDo.push(leftBankCrossers);
-
-
-    }
+        }
+        manager.addChangeable(new test.CommandLineChanger( temp,temp2,temp3));
     }
     public void IniStacks(){
-        LinkedList<ICrosser> alist = new LinkedList<>();
-        LinkedList<ICrosser> alistl = new LinkedList<>();
-//        List<List<ICrosser>> Alist = new LinkedList<>();
-        this.UnDo = null;
-        this.ReDo =null;
-        this.UnDo = new Stack();
-        this.ReDo = new Stack();
-        alist.add(farmer);
-        alist.add(herbanimal);
-        alist.add(carnianimal);
-        alist.add(planet);
-//        Alist.add(alist);
-//        Alist.add(alistl);
-        this.UnDo.push(alist);
-        this.UnDo.push(alistl);
-        s=true;
+//        List<ICrosser> alist = new LinkedList<>();
+////        LinkedList<ICrosser> alistl = new LinkedList<>();
+//////        List<List<ICrosser>> Alist = new LinkedList<>();
+////        this.UnDo = null;
+////        this.ReDo =null;
+////        this.UnDo = new Stack();
+////        this.ReDo = new Stack();
+//        alist.add(farmer);
+//        alist.add(herbanimal);
+//        alist.add(carnianimal);
+//        alist.add(planet);
+//////        Alist.add(alist);
+//////        Alist.add(alistl);
+////        this.UnDo.push(alist);
+////        this.UnDo.push(alistl);
+////        s=true;
+////        manager.addChangeable(new test.CommandLineChanger( alist));
+        manager = new ChangeManger();
     }
     public static GameEngine setGameInstance(GameEngine e){
         return instance = e;
@@ -227,5 +277,23 @@ public class GameEngine implements IRiverCrossingController {
     public static GameEngine getGameInstance(){
         return instance;
     }
+    public String[] getInstructions() {
 
+        String ins[] = new String[10];
+        ins[0] = "Hello";
+        ins[1] = "this is river crosser game";
+        ins[2] = "the help is in the GUI";
+        ins[3] = "Credits are to Aly And Mahmoud";
+        ins[4] = "Good luck";
+        return ins;
+    }
+   public List<ICrosser> UNDO_RIGHT;
+    public List<ICrosser> UNDO_LEFT;
+    public List<ICrosser> UNDO_BOAT;
+    public void Set_Lists(List<ICrosser> right,List<ICrosser> left,List<ICrosser> boat){
+        this.UNDO_RIGHT = right;
+        this.UNDO_LEFT = left;
+        this.UNDO_BOAT = boat;
+        System.out.println("FRrm GAME ENGINE"+UNDO_RIGHT);
+    }
 }

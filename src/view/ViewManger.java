@@ -1,11 +1,14 @@
 package view;
 
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
-
+import javafx.scene.ImageCursor;
 import Logic.GameEngine;
 import Logic.ICrosseingStrategy;
+import Logic.ReadFile_XML;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -13,9 +16,19 @@ import javafx.scene.effect.DropShadow;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.stage.Stage;
 import model.*;
 import javafx.scene.image.Image;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import javafx.scene.text.Font;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 
 public class ViewManger {
     private static final int WIDTH = 1024, HEIGHT=700;
@@ -26,7 +39,10 @@ public class ViewManger {
 
     private final static int MENU_BUTTONS_START_X = 100;
     private final static int MENU_BUTTONS_START_Y = 150;
+    private final String FONT_PATH = "src/model/resources/Alessia.otf";
+    private Label story1,story2;
 
+    private CrossRiverSubScene secondhelpSubScene;
     private CrossRiverSubScene creditsSubScene;
     private CrossRiverSubScene helpSubScene;
     private CrossRiverSubScene scoresSubScene;
@@ -36,6 +52,8 @@ public class ViewManger {
     private CrossRiverSubScene chooseHerbivorousAnimalSubScene;
     private CrossRiverSubScene choosePlantsSubScene;
     private CrossRiverSubScene chooseStoryGameSubScene;
+    private CrossRiverSubScene LoadOrSaveSubScene;
+    private Label n;
     private ImageView creditphoto;
     GameEngine startGameLogic = new GameEngine();
 
@@ -46,6 +64,8 @@ public class ViewManger {
     List<ShipPicker> carnAnimalList;
     List<ShipPicker> herbAnimalList;
     List<ShipPicker> plantList;
+    List<ShipPicker> loadList;
+
     List<CrossRiverButton> menuButtons;
 
     private SHIP choosenShip;
@@ -54,7 +74,9 @@ public class ViewManger {
     private HERBANIMAL choosenHerbAnimal;
     private CARNANIMAL choosenCarnAnimal;
     private PLANTS choosenPlants;
+    private LOAD choosenLoad;
     private static ViewManger single_Instance = null;
+    public static Image cursorming = new Image("view/resources/tap.png");
 
     //Constructor
     private ViewManger(){
@@ -63,6 +85,7 @@ public class ViewManger {
         mainScene = new Scene(mainPane,WIDTH,HEIGHT);
         mainStage = new Stage();
         mainStage.setScene(mainScene);
+        mainPane.setCursor(new ImageCursor(cursorming));
         creatSubScene();
         creatButtons();
         creatBackground();
@@ -77,9 +100,12 @@ public class ViewManger {
 
     private void creatSubScene(){
         //create SubScenes.
+        createSCORE();
+        createLoadOrSaveSubScene();
         createCreditSubScene();
         createHelpSubScene();
-        createSaveSubScene();
+        createSecondHelpSubScene();
+//        createSaveSubScene();
         createStoryGameSubScene();
         creatShipChooserSubScene();
         createFarmerChooserSubScene();
@@ -87,6 +113,77 @@ public class ViewManger {
         createCarnAnimalSubScene();
         createPlanetChooserSubScene();
     }
+    private void createHelpButton(){
+        CrossRiverButton helpButton = new CrossRiverButton("HELP");
+        addMenuButtons(helpButton);
+        CrossRiverButton secondnextButton = new CrossRiverButton("NEXT");
+        secondnextButton.setLayoutX(350);
+        secondnextButton.setLayoutY(320);
+        story1 = new Label("Story 1 :\nA farmer wants to cross a river with a carnivorous , herbivorous and a plant\n\nRules:\n-Farmer only can raft the boat and can't be eaten\n-Carnivorous can only eat herbivorous\n-Herbivorous can only eat plants ");
+        helpButton.setOnMouseClicked(e->{
+            story1.setLayoutX(80);
+            story1.setLayoutY(25);
+            story1.setPrefHeight(350);
+            story1.setPrefWidth(500);
+
+            story1.setWrapText(true);
+            try{
+                story1.setFont(Font.loadFont(new FileInputStream(FONT_PATH),20));
+            }catch (FileNotFoundException x){
+                story1.setFont(Font.font("verdana",18));
+            }
+
+            showSubScene(helpSubScene);
+        });
+        secondnextButton.setOnMouseEntered(e->{
+            secondnextButton.setEffect(new DropShadow());
+        });
+        secondnextButton.setOnMouseExited(e->{
+            secondnextButton.setEffect(null);
+        });
+        secondnextButton.setOnMouseClicked(e->{
+            showSubScene(secondhelpSubScene);
+        });
+        helpSubScene.getPane().getChildren().addAll(story1,secondnextButton);
+    }
+    private void createSecondHelpSubScene(){
+        secondhelpSubScene = new CrossRiverSubScene();
+        mainPane.getChildren().add(secondhelpSubScene);
+        story2 = new Label("Story 2 :\nFour farmers and their animal need to cross a river in a small boat." +
+                " The weight of the four farmers are 90 kg, 80 kg, 60 kg, 40 kg respectively and the" +
+                " weight of the animal is 20 kg\n\nRules:\n-Farmer only can raft the boat and can't be eaten\n" +
+                "-The boat can't bear a load heavier than than 100 kg ");
+        story2.setLayoutX(80);
+        story2.setLayoutY(25);
+        story2.setPrefHeight(350);
+        story2.setPrefWidth(500);
+
+        story2.setWrapText(true);
+        try{
+            story2.setFont(Font.loadFont(new FileInputStream(FONT_PATH),20));
+        }catch (FileNotFoundException x){
+            story2.setFont(Font.font("verdana",18));
+        }
+
+        secondhelpSubScene.getPane().getChildren().addAll(createBackButton(),story2);
+    }
+    private CrossRiverButton createBackButton() {
+        CrossRiverButton backbutton2 = new CrossRiverButton("BACK");
+        backbutton2.setLayoutX(350);
+        backbutton2.setLayoutY(320);
+
+        backbutton2.setOnMouseClicked(e->{
+            showSubScene(helpSubScene);
+        });
+        backbutton2.setOnMouseEntered(e->{
+            backbutton2.setEffect(new DropShadow());
+        });
+        backbutton2.setOnMouseExited(e->{
+            backbutton2.setEffect(null);
+        });
+        return backbutton2;
+    }
+
     public void showSubScene(CrossRiverSubScene subScene){
         if(sceneToHide != null){
             sceneToHide.moveSubScene();
@@ -107,7 +204,7 @@ public class ViewManger {
         CrossRiverButton startButton = new CrossRiverButton("PLAY");
         addMenuButtons(startButton);
         startButton.setOnAction(e->{
-            showSubScene(chooseStoryGameSubScene);
+            showSubScene(LoadOrSaveSubScene);
         });
     }
     private void createScoresButton(){
@@ -117,13 +214,7 @@ public class ViewManger {
             showSubScene(scoresSubScene);
         });
     }
-    private void createHelpButton(){
-        CrossRiverButton helpButton = new CrossRiverButton("HELP");
-        addMenuButtons(helpButton);
-        helpButton.setOnAction(e->{
-            showSubScene(helpSubScene);
-        });
-    }
+
     private void createCreditsButton(){
         CrossRiverButton creditsButton = new CrossRiverButton("CREDITS");
         addMenuButtons(creditsButton);
@@ -172,24 +263,56 @@ public class ViewManger {
 
 
     //All SubScenes
+    private void createLoadOrSaveSubScene(){
+        LoadOrSaveSubScene = new CrossRiverSubScene();
+        mainPane.getChildren().add(LoadOrSaveSubScene);
+
+        InfoLabel choosesLoadStory = new InfoLabel("New or Load?");
+        choosesLoadStory.setLayoutX(110);
+        choosesLoadStory.setLayoutY(25);
+        LoadOrSaveSubScene.getPane().getChildren().add(choosesLoadStory);
+        LoadOrSaveSubScene.getPane().getChildren().addAll(creatLoadToChoose(),createNextToStory());
+
+    }
+
+    private void createSCORE(){
+
+        scoresSubScene = new CrossRiverSubScene();
+        mainPane.getChildren().add(scoresSubScene);
+
+        n = new Label("Last Score "+String.valueOf(GameViewManger.numberOfMoves));
+        n.setLayoutX(100);
+        n.setLayoutY(50);
+        n.setStyle("-fx-text-fill: #000;-fx-font-size: 24px; font-weight: bold");
+        System.out.println("f eh");
+        scoresSubScene.getPane().getChildren().addAll(n);
+
+    }
     private void createCreditSubScene(){
-        creditsSubScene = new CrossRiverSubScene();
+         creditsSubScene = new CrossRiverSubScene();
         mainPane.getChildren().add(creditsSubScene);
         creditphoto = new ImageView("model/resources/Credit.jpg");
         creditphoto.setFitHeight(400);
         creditphoto.setFitWidth(600);
+        String musicFile = "src/Francais Lai - Love Story.mp3";
+        Media sound = new Media(new File(musicFile).toURI().toString());
+        MediaPlayer mediaPlayer = new MediaPlayer(sound);
+
         Label w = new Label("This game was created on 30 of April, 2019\nAs a college project, For more information" +
-                "\nContact The Team-Leader1: Mahmoud Elkarargy\n\tmahmoud.elkarargy@gmail.com\nContact The Team-Leader2: Ali Elshewahy\n\talyelshwahy@yahoo.com");
+                "\nContact The Team-Leader1: Mahmoud Elkarargy\n\tmahmoud.elkarargy@gmail.com\n");
         w.setLayoutX(50);
         w.setLayoutY(20);
         w.setStyle("-fx-text-fill: #fff;-fx-font-size: 24px; font-weight: bold");
         creditphoto.setOnMouseEntered(e->{
             creditphoto.setEffect(new DropShadow());
             creditsSubScene.getPane().getChildren().addAll(w);
+            mediaPlayer.play();
+
         });
         creditphoto.setOnMouseExited(e->{
             creditphoto.setEffect(null);
             creditsSubScene.getPane().getChildren().remove(w);
+            mediaPlayer.stop();
         });
         creditsSubScene.getPane().getChildren().addAll(creditphoto);
     }
@@ -197,15 +320,18 @@ public class ViewManger {
         helpSubScene = new CrossRiverSubScene();
         mainPane.getChildren().add(helpSubScene);
     }
-    private void createSaveSubScene(){
-        scoresSubScene = new CrossRiverSubScene();
-        mainPane.getChildren().add(scoresSubScene);
-    }
-
+//    private void createSaveSubScene(){
+//        scoresSubScene = new CrossRiverSubScene();
+//        mainPane.getChildren().addAll(scoresSubScene);
+//        System.out.println("ehhhhhhhhhhhhhhj");
+//    }
+//    private void createScoresSubScene(){
+//        scoresSubScene = new CrossRiverSubScene();
+//        mainPane.getChildren().add(n);
+//    }
     private void createStoryGameSubScene(){
         chooseStoryGameSubScene = new CrossRiverSubScene();
         mainPane.getChildren().add(chooseStoryGameSubScene);
-
         InfoLabel choosesGameStoryLabel = new InfoLabel("Choose Story");
         choosesGameStoryLabel.setLayoutX(110);
         choosesGameStoryLabel.setLayoutY(25);
@@ -267,6 +393,46 @@ public class ViewManger {
 
 
     //SubScenes view Sequence
+
+    private CrossRiverButton createNextToStory(){
+        CrossRiverButton nextToLoad = new CrossRiverButton("NEXT");
+        nextToLoad.setLayoutX(350);
+        nextToLoad.setLayoutY(320);
+
+        nextToLoad.setOnAction(e->{
+            if(choosenLoad!=null){
+                if(String.valueOf(choosenLoad).equalsIgnoreCase("NEW"))
+                    showSubScene(chooseStoryGameSubScene);
+                else{
+                    GameViewManger gameManger = new GameViewManger(startGameLogic);
+                    ReadFile_XML x = new ReadFile_XML();
+                    try {
+                        x.Read();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    } catch (SAXException ex) {
+                        ex.printStackTrace();
+                    } catch (ParserConfigurationException ex) {
+                        ex.printStackTrace();
+                    }
+
+                    startGameLogic.setStoryType(x.getType());
+                    startGameLogic.newGame(iCrosseingStrategy);
+                    try {
+                        gameManger.creatLoadGame(mainStage);
+                    } catch (ParserConfigurationException ex) {
+                        ex.printStackTrace();
+                    } catch (SAXException ex) {
+                        ex.printStackTrace();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        });
+        return nextToLoad;
+    }
+
     private CrossRiverButton createNextToShip(){
         CrossRiverButton nextToShipButton = new CrossRiverButton("NEXT");
         nextToShipButton.setLayoutX(350);
@@ -274,6 +440,7 @@ public class ViewManger {
 
         nextToShipButton.setOnAction(e->{
             if(choosenStory!=null){
+
                 showSubScene(chooseCharctersSubScene);
             }
         });
@@ -321,7 +488,6 @@ public class ViewManger {
 
         nextToCarnAnimalButton.setOnAction(e->{
             //here will open new Scene to choose Farmers
-            System.out.println("EHHHH EL MOSHKLAAAAAAAAAAAAAA " + choosenHerbAnimal);
             if(choosenHerbAnimal!=null){
                 showSubScene(chooseCarnivorousAnimalSubScene);
             }
@@ -349,10 +515,11 @@ public class ViewManger {
         startButton.setOnAction(e->{
             if(choosenPlants!=null && choosenStory.getUrl().contains("StoryOne")){
                 //here will start game
-                GameViewManger gameManger = new GameViewManger(startGameLogic);
-                gameManger.creatNewGame(mainStage, choosenShip , choosenFarmer , choosenHerbAnimal ,choosenCarnAnimal ,choosenPlants);
                 startGameLogic.setStoryType(1);
                 startGameLogic.newGame(iCrosseingStrategy);
+                GameViewManger gameManger = new GameViewManger(startGameLogic);
+                gameManger.creatNewGame(mainStage, choosenShip , choosenFarmer , choosenHerbAnimal ,choosenCarnAnimal ,choosenPlants);
+
             }
             else if(choosenHerbAnimal!=null && choosenStory.getUrl().contains("StoryTwo")){
                 startGameLogic.setStoryType(2);
@@ -366,12 +533,34 @@ public class ViewManger {
 
 
     //Choose from Stories/animals/farmers..
+
+    private HBox creatLoadToChoose(){
+        HBox box = new HBox();
+        box.setSpacing(120);
+        loadList = new ArrayList<>();
+        for(LOAD load: LOAD.values()){
+            ShipPicker loadToPick = new ShipPicker(load, null,null,6,null,null,null,null);
+            loadList.add(loadToPick);
+            box.getChildren().add(loadToPick);
+            loadToPick.setOnMouseClicked(e->{
+                for(ShipPicker load1 : loadList){
+                    load1.setIsCircleChoosen(false);
+                }
+                loadToPick.setIsCircleChoosen(true);
+                choosenLoad = loadToPick.getLoad();
+            });
+        }
+        box.setLayoutX(300 - (118*2));
+        box.setLayoutY(100);
+        return box;
+    }
+
     private HBox creatStoryToChoose(){
         HBox box = new HBox();
         box.setSpacing(120);
         storyList = new ArrayList<>();
         for(STORY story: STORY.values()){
-            ShipPicker storyToPick = new ShipPicker(story,null,0,null,null,null,null);
+            ShipPicker storyToPick = new ShipPicker(null, story,null,0,null,null,null,null);
             storyList.add(storyToPick);
             box.getChildren().add(storyToPick);
             storyToPick.setOnMouseClicked(e->{
@@ -391,7 +580,7 @@ public class ViewManger {
         box.setSpacing(20);
         shipsList = new ArrayList<>();
         for(SHIP ship: SHIP.values()){
-            ShipPicker shipToPick = new ShipPicker(null, ship,1,null,null,null,null);
+            ShipPicker shipToPick = new ShipPicker(null, null, ship,1,null,null,null,null);
             shipsList.add(shipToPick);
             box.getChildren().add(shipToPick);
             shipToPick.setOnMouseClicked(e->{
@@ -411,7 +600,7 @@ public class ViewManger {
         box.setSpacing(30);
         farmerList = new ArrayList<>();
         for(FARMER farmer: FARMER.values()){
-            ShipPicker farmerToPick = new ShipPicker(null, null,2,farmer,null,null,null);
+            ShipPicker farmerToPick = new ShipPicker(null, null, null,2,farmer,null,null,null);
             farmerList.add(farmerToPick);
             box.getChildren().add(farmerToPick);
             farmerToPick.setOnMouseClicked(e->{
@@ -431,7 +620,7 @@ public class ViewManger {
         box.setSpacing(30);
         herbAnimalList = new ArrayList<>();
         for(HERBANIMAL herbanimal: HERBANIMAL.values()){
-            ShipPicker herbAnimalToPick = new ShipPicker(null, null,3,null, herbanimal,null,null);
+            ShipPicker herbAnimalToPick = new ShipPicker(null, null, null,3,null, herbanimal,null,null);
             herbAnimalList.add(herbAnimalToPick);
             box.getChildren().add(herbAnimalToPick);
             herbAnimalToPick.setOnMouseClicked(e->{
@@ -451,7 +640,7 @@ public class ViewManger {
         box.setSpacing(30);
         carnAnimalList = new ArrayList<>();
         for(CARNANIMAL carnanimal: CARNANIMAL.values()){
-            ShipPicker carnAnimalToPick = new ShipPicker(null, null,4,null, null,carnanimal,null);
+            ShipPicker carnAnimalToPick = new ShipPicker(null, null, null,4,null, null,carnanimal,null);
             carnAnimalList.add(carnAnimalToPick);
             box.getChildren().add(carnAnimalToPick);
             carnAnimalToPick.setOnMouseClicked(e->{
@@ -471,7 +660,7 @@ public class ViewManger {
         box.setSpacing(30);
         plantList = new ArrayList<>();
         for(PLANTS plants: PLANTS.values()){
-            ShipPicker plantToPick = new ShipPicker(null, null,5,null, null,null,plants);
+            ShipPicker plantToPick = new ShipPicker(null, null, null,5,null, null,null,plants);
             plantList.add(plantToPick);
             box.getChildren().add(plantToPick);
             plantToPick.setOnMouseClicked(e->{
@@ -493,6 +682,7 @@ public class ViewManger {
         return mainStage;
     }
     public void resetScene(){
-        showSubScene(chooseStoryGameSubScene);
+        showSubScene(LoadOrSaveSubScene);
+        mainPane.setCursor(new ImageCursor(cursorming));
     }
 }

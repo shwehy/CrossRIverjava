@@ -4,6 +4,11 @@ import java.awt.image.BufferedImage;
 
 public class Herbanimal implements ICrosser {
     double weight;
+    int rank;
+    boolean CanS ;
+    String label;
+    private Herbanimal instance;
+    BufferedImage x[];
     public Herbanimal (double weight ){
         this.weight = weight;
     }
@@ -25,11 +30,16 @@ public class Herbanimal implements ICrosser {
     }
 
     public ICrosser makeCopy() {
-        return null;
+        instance.rank = rank;
+        instance.weight = getWeight();
+        instance.label = getLabelToBeShown();
+        instance.CanS = false;
+        instance.getImages();
+        return instance;
     }
 
     public void setLabelToBeShown(String label) {
-
+    this.label = label;
     }
 
     public String getLabelToBeShown() {

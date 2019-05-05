@@ -3,7 +3,12 @@ package Logic;
 import java.awt.image.BufferedImage;
 
 public class Planet implements ICrosser {
+    double weight;
 
+    int rank;
+    boolean CanS ;
+    String label;
+    private Planet instance;
     public boolean canSail() {
         return false;
     }
@@ -21,11 +26,16 @@ public class Planet implements ICrosser {
     }
 
     public ICrosser makeCopy() {
-        return null;
+        instance.rank = rank;
+        instance.weight = getWeight();
+        instance.label = getLabelToBeShown();
+        instance.CanS = false;
+        instance.getImages();
+        return instance;
     }
 
     public void setLabelToBeShown(String label) {
-
+this.label = label;
     }
 
     public String getLabelToBeShown() {

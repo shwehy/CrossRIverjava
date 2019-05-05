@@ -1,7 +1,10 @@
 package view;
 
+import Logic.test;
+import javafx.scene.ImageCursor;
 import Logic.GameEngine;
 import Logic.ICrosser;
+import Logic.ReadFile_XML;
 import javafx.animation.AnimationTimer;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -22,7 +25,11 @@ import model.PLANTS;
 import javafx.scene.image.ImageView;
 import javafx.scene.media.Media;
 import javafx.scene.effect.DropShadow;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,7 +44,7 @@ public class GameViewManger {
     private MediaView mediaview;
     private ImageView ship, farmerImage, herbAnimalImage, carnAnimalImage, plantImage,farmerA,farmerB,farmerC,farmerD;
     private ImageView saveButton, redoButton, undoButton, backButton, solveButton;
-    private ImageView gameoverIcon, winnergameIcon,stopVideo,playVideoAgian;
+    private ImageView gameoverIcon, winnergameIcon,stopVideo,playVideoAgian,getReady, helpButton, closeHelp;
     private Image idleship, reversedShip;
     private Image idleFarmer, deadFarmer, JumpFarmer;
     private Image idleHerbAnimal, selectedHerbAnimal, deadHerbAnimal;
@@ -60,8 +67,9 @@ public class GameViewManger {
     private Label weight;
     private ImageView units = new ImageView(zero);
     private ImageView Tenth = new ImageView(zero);
-    private int numberOfMoves=0;
-
+    public static int numberOfMoves;
+    private Label txt1,txt2,helptxt;
+    private Scene gameOver,helpScene;
     private boolean onebyone = true;
 
     GameEngine startGameLogic;
@@ -74,14 +82,12 @@ public class GameViewManger {
     private boolean isHerbAnimalClicked=false, isCarnAnimalClicked =false, isPlantClicked=false;
     private boolean endOfBank= true;
     private int angle,loserAngle,winnerAngle;
-    private Label txt1,txt2;
     private AnimationTimer gameTimer, winnerTimer;
     private GridPane gridPane1;
     private GridPane gridPane2;
     private final static String BACKGROUND_IMAGE = "view/resources/River.jpeg";
     private final static String BACKGROUND_IMAGE2 = "view/resources/Sky.png";
     private final static String GameOVERBACKGROUND_IMAGE= "view/resources/Back.png";
-    private Scene gameOver;
     List<ICrosser> boatRiders = new LinkedList<ICrosser>();
 
     SHIP choosenShip;
@@ -94,6 +100,7 @@ public class GameViewManger {
     //Passing the GameEngine object from the ViewManger.
     public GameViewManger(GameEngine startGameLogic){
         //Set the Scene and hight, Width of the game.
+        System.out.println("init aho");
         initStage();
         this.startGameLogic = startGameLogic;
         //to init. the boat side on the left bank.
@@ -102,18 +109,36 @@ public class GameViewManger {
     }
 
     private CrossRiverButton createLetsGoButton(){
+
         CrossRiverButton letsGoButton = new CrossRiverButton("Let's GO");
         letsGoButton.setLayoutX(GAME_WIDTH/2);
         letsGoButton.setLayoutY(100);
         letsGoButton.setOnAction(e->{
-            startGameLogic.REDOLIST(startGameLogic.story1RightBankList,startGameLogic.story1LeftBankList);
+            String musicFile_Acheviement = "src/view/ach.mp3";
+            String musicFile_Lose = "src/view/Lose.mp3";
+            String musicFile_Win = "src/view/voctory.wav";
+
+
+            String musicFile_Alert = "src/view/alert.wav";
+            startGameLogic.setNumberOfSails(numberOfMoves);
+            Media ach = new Media(new File(musicFile_Acheviement).toURI().toString());
+            MediaPlayer mediaPlayer_ach = new MediaPlayer(ach);
+            Media lose = new Media(new File(musicFile_Lose).toURI().toString());
+            MediaPlayer mediaPlayer_lose = new MediaPlayer(lose);
+            Media win = new Media(new File(musicFile_Win).toURI().toString());
+            MediaPlayer mediaPlayer_win = new MediaPlayer(win);
+            Media alert = new Media(new File(musicFile_Alert).toURI().toString());
+            MediaPlayer mediaPlayer_alert= new MediaPlayer(alert);
             //Check if this is the end of bank to avoid pressing on the button,
                 //while the boat is moving.
             if (endOfBank && startGameLogic.isValidforBoat(boatRiders)) {
                 letsgoButtonisClicked = true;
+                startGameLogic.REDOLIST(startGameLogic.story1RightBankList,startGameLogic.story1LeftBankList,startGameLogic.boatRiders);
+                mediaPlayer_ach.play();
 
             } else if(endOfBank){
                 System.out.println("unvalid move, Farmer is not on boat");
+                mediaPlayer_alert.play();
                 letsgoButtonisClicked = false;
             }
             if(letsgoButtonisClicked && endOfBank) {
@@ -122,6 +147,8 @@ public class GameViewManger {
                 System.out.println("Left" + startGameLogic.story1LeftBankList);
                 System.out.println("Boat " + boatRiders);
                 if(startGameLogic.story1RightBankList.isEmpty()) {
+                    mediaPlayer_ach.stop();
+                    mediaPlayer_win.play();
                     gameOverStoryone(1);
                 }
                 else if (storyNumber==1 && startGameLogic.isValidFromLogic(startGameLogic.story1RightBankList, startGameLogic.story1LeftBankList, boatRiders)) {
@@ -137,6 +164,8 @@ public class GameViewManger {
                     System.out.println(numberOfMoves);
                 }
                 else {
+                    mediaPlayer_ach.stop();
+                    mediaPlayer_lose.play();
                     gameOverStoryone(2);
                 }
             }
@@ -267,7 +296,7 @@ public class GameViewManger {
             gameOverStage.close();
             if(storyNumber==1) {
                 //Add your path and don't delete mine!!!!!
-                Media video = new Media(Paths.get("/Users/MahmoudElkarargy/Desktop/solveStoryOne.mp4").toUri().toString());
+                Media video = new Media(Paths.get("src/solveStoryOne.mp4").toUri().toString());
                 mediaplayer = new MediaPlayer(video);
                 mediaview = new MediaView(mediaplayer);
                 mediaview.setFitHeight(GAME_HIGHT);
@@ -279,7 +308,7 @@ public class GameViewManger {
             }
             else{
                 //Add your path and don't delete mine!!!!!
-                Media video = new Media(Paths.get("/Users/MahmoudElkarargy/Desktop/SolveStoryTwo.mp4").toUri().toString());
+                Media video = new Media(Paths.get("src/SolveStoryTwo.mp4").toUri().toString());
                 mediaplayer = new MediaPlayer(video);
                 mediaview = new MediaView(mediaplayer);
                 mediaview.setFitHeight(GAME_HIGHT);
@@ -336,10 +365,10 @@ public class GameViewManger {
         gameOverStage.setY(100);
 
         gameOverStage.showAndWait();
-//        gameOverStage.show();
     }
     private void initStage() {
         gamePane = new AnchorPane();
+        gamePane.setCursor(new ImageCursor(ViewManger.cursorming));
         gameScene = new Scene(gamePane, GAME_WIDTH, GAME_HIGHT);
         gameStage = new Stage();
         gameStage.setScene(gameScene);
@@ -349,10 +378,10 @@ public class GameViewManger {
         saveButton.setLayoutX(GAME_WIDTH-80);
         redoButton = new ImageView("view/resources/Redo.png");
         redoButton.setLayoutY(30);
-        redoButton.setLayoutX(GAME_WIDTH-140);
+        redoButton.setLayoutX(GAME_WIDTH-200);
         undoButton = new ImageView("view/resources/Undo.png");
         undoButton.setLayoutY(30);
-        undoButton.setLayoutX(GAME_WIDTH-200);
+        undoButton.setLayoutX(GAME_WIDTH-250);
         redoButton.setFitWidth(50);
         redoButton.setFitHeight(50);
         undoButton.setFitHeight(50);
@@ -362,6 +391,27 @@ public class GameViewManger {
         backButton.setLayoutY(30);
         backButton.setFitWidth(50);
         backButton.setFitHeight(50);
+        getReady = new ImageView("view/resources/GetReady.png");
+        getReady.setLayoutX(GAME_WIDTH/2-200);
+        getReady.setLayoutY(GAME_HIGHT/2-100);
+        helpButton = new ImageView("view/resources/Help.png");
+        helpButton.setFitHeight(50);
+        helpButton.setFitWidth(50);
+        helpButton.setLayoutY(30);
+        helpButton.setLayoutX(GAME_WIDTH-140);
+
+        helpButton.setOnMouseEntered(e->{
+            helpButton.setEffect(new DropShadow());
+        });
+        helpButton.setOnMouseExited(e->{
+            helpButton.setEffect(null);
+        });
+        helpButton.setOnMouseClicked(e->{
+            creatHelpSubScene();
+        });
+        getReady.setOnMouseExited(e->{
+            gamePane.getChildren().remove(getReady);
+        });
         saveButton.setOnMouseEntered(e->{
             saveButton.setEffect(new DropShadow());
         });
@@ -371,8 +421,14 @@ public class GameViewManger {
         saveButton.setOnMouseClicked(event -> {
             GameEngine.setGameInstance(startGameLogic);
             startGameLogic.Set_Save_object(startGameLogic.storyType,startGameLogic.getCrossersOnLeftBank(),startGameLogic.getCrossersOnRightBank(),
-                    startGameLogic.getCrossersOnboat(),numberOfMoves,true);
+                    startGameLogic.getCrossersOnboat(),numberOfMoves,startGameLogic.isBoatOnTheLeftBank(), choosenShip,
+                    choosenFarmer,choosenHerbAnimal,choosenCarnAnimal,choosenPlants);
             startGameLogic.saveGame();
+            String musicFile_Save = "src/view/win.wav";
+            Media save = new Media(new File(musicFile_Save).toURI().toString());
+            MediaPlayer mediaPlayer_save = new MediaPlayer(save);
+            mediaPlayer_save.play();
+
         });
         undoButton.setOnMouseEntered(e->{
             undoButton.setEffect(new DropShadow());
@@ -401,13 +457,200 @@ public class GameViewManger {
         });
         undoButton.setOnMouseClicked(e->{
             startGameLogic.undo();
+//            test t = new test();
+
+//            List<ICrosser> rightt =  startGameLogic.UNDO_RIGHT;
+            undoRedoFunc();
         });
         redoButton.setOnMouseClicked(e->{
             startGameLogic.redo();
+            undoRedoFunc();
         });
         setNumberOfMoves();
     }
+    private void undoRedoFunc(){
+        System.out.println("LISTSSSS IN GUIIII");
+        System.out.println("RIGHT" + test.getRightFinal());
+        System.out.println("LEFT" + test.getLeftFinal());
+        System.out.println("BOAT" + test.getBoatFinal());
+        startGameLogic.story1RightBankList.clear();
+        startGameLogic.story1LeftBankList.clear();
+        boatRiders.clear();
+        System.out.println("NOW LIST ARE CLEAREEDDDDD:  "+startGameLogic.story1RightBankList);
+        System.out.println(boatRiders);
+        numberOfMoves-=1;
+        if(storyNumber==2) {
+            if (test.getRightFinal().contains(startGameLogic.story2herbAnimal)) {
+                System.out.println("SBAH el foll");
+                startGameLogic.story1RightBankList.add(startGameLogic.story2herbAnimal);
+                gamePane.getChildren().remove(herbAnimalImage);
+                creatHerbAnimal(choosenHerbAnimal);
+            }
+            if (test.getRightFinal().contains(startGameLogic.farmerA)) {
+                startGameLogic.story1RightBankList.add(startGameLogic.farmerA);
+                gamePane.getChildren().remove(farmerA);
+                creatFarmerA();
+            }
+            if (test.getRightFinal().contains(startGameLogic.farmerB)) {
+                startGameLogic.story1RightBankList.add(startGameLogic.farmerB);
+                gamePane.getChildren().remove(farmerB);
+                creatFarmerB();
+            }
+            if (test.getRightFinal().contains(startGameLogic.farmerC)) {
+                startGameLogic.story1RightBankList.add(startGameLogic.farmerC);
+                gamePane.getChildren().remove(farmerC);
+                creatFarmerC();
+            }
+            if (test.getRightFinal().contains(startGameLogic.farmerD)) {
+                startGameLogic.story1RightBankList.add(startGameLogic.farmerD);
+                gamePane.getChildren().remove(farmerD);
+                creatFarmerD();
+                System.out.println("zzzz");
+            }
 
+
+            if (test.getLeftFinal().contains(startGameLogic.story2herbAnimal)) {
+                startGameLogic.story1LeftBankList.add(startGameLogic.story2herbAnimal);
+                gamePane.getChildren().remove(herbAnimalImage);
+                creatHerbAnimal(choosenHerbAnimal);
+            }
+            if (test.getLeftFinal().contains(startGameLogic.farmerA)) {
+                startGameLogic.story1LeftBankList.add(startGameLogic.farmerA);
+                gamePane.getChildren().remove(farmerA);
+                creatFarmerA();
+            }
+            if (test.getLeftFinal().contains(startGameLogic.farmerB)) {
+                startGameLogic.story1LeftBankList.add(startGameLogic.farmerB);
+                gamePane.getChildren().remove(farmerB);
+                creatFarmerB();
+            }
+            if (test.getLeftFinal().contains(startGameLogic.farmerC)) {
+                startGameLogic.story1LeftBankList.add(startGameLogic.farmerC);
+                gamePane.getChildren().remove(farmerC);
+                creatFarmerC();
+            }
+            if (test.getLeftFinal().contains(startGameLogic.farmerD)) {
+                startGameLogic.story1LeftBankList.add(startGameLogic.farmerD);
+                gamePane.getChildren().remove(farmerD);
+                creatFarmerD();
+
+                System.out.println("zzzz2222");
+            }
+
+
+            if (test.getBoatFinal().contains(startGameLogic.story2herbAnimal)) {
+                boatRiders.add(startGameLogic.story2herbAnimal);
+                gamePane.getChildren().remove(herbAnimalImage);
+                creatHerbAnimal(choosenHerbAnimal);
+            }
+            if (test.getBoatFinal().contains(startGameLogic.farmerA)) {
+                boatRiders.add(startGameLogic.farmerA);
+                gamePane.getChildren().remove(farmerA);
+                creatFarmerA();
+            }
+            if (test.getBoatFinal().contains(startGameLogic.farmerB)) {
+                boatRiders.add(startGameLogic.farmerB);
+                gamePane.getChildren().remove(farmerB);
+                creatFarmerB();
+            }
+            if (test.getBoatFinal().contains(startGameLogic.farmerC)) {
+                boatRiders.add(startGameLogic.farmerC);
+                gamePane.getChildren().remove(farmerC);
+                creatFarmerC();
+            }
+            if (test.getBoatFinal().contains(startGameLogic.farmerD)) {
+                boatRiders.add(startGameLogic.farmerD);
+                gamePane.getChildren().remove(farmerD);
+                creatFarmerD();
+
+                System.out.println("zzzz333333333333");
+            }
+            System.out.println("NOW LISTS:: " + startGameLogic.story1RightBankList);
+            System.out.println(boatRiders);
+
+            farmerAclicked();
+            farmerBclicked();
+            farmerCclicked();
+            farmerDclicked();
+            herbAnimalClicked();
+        }
+        if(storyNumber==1) {
+            if (test.getRightFinal().contains(startGameLogic.herbanimal)) {
+                startGameLogic.story1RightBankList.add(startGameLogic.herbanimal);
+                gamePane.getChildren().remove(herbAnimalImage);
+                creatHerbAnimal(choosenHerbAnimal);
+            }
+            if (test.getRightFinal().contains(startGameLogic.farmer)) {
+                startGameLogic.story1RightBankList.add(startGameLogic.farmer);
+                gamePane.getChildren().remove(farmerImage);
+                creatFarmer(choosenFarmer);
+            }
+            if (test.getRightFinal().contains(startGameLogic.carnianimal)) {
+                startGameLogic.story1RightBankList.add(startGameLogic.carnianimal);
+                gamePane.getChildren().remove(carnAnimalImage);
+                creatCarnAnimal(choosenCarnAnimal);
+            }
+            if (test.getRightFinal().contains(startGameLogic.planet)) {
+                startGameLogic.story1RightBankList.add(startGameLogic.planet);
+                gamePane.getChildren().remove(plantImage);
+                creatPlant(choosenPlants);
+            }
+
+
+
+            if (test.getLeftFinal().contains(startGameLogic.herbanimal)) {
+                startGameLogic.story1LeftBankList.add(startGameLogic.herbanimal);
+                gamePane.getChildren().remove(herbAnimalImage);
+                creatHerbAnimal(choosenHerbAnimal);
+            }
+            if (test.getLeftFinal().contains(startGameLogic.farmer)) {
+                startGameLogic.story1LeftBankList.add(startGameLogic.farmer);
+                gamePane.getChildren().remove(farmerImage);
+                creatFarmer(choosenFarmer);
+            }
+            if (test.getLeftFinal().contains(startGameLogic.carnianimal)) {
+                startGameLogic.story1LeftBankList.add(startGameLogic.carnianimal);
+                gamePane.getChildren().remove(carnAnimalImage);
+                creatCarnAnimal(choosenCarnAnimal);
+            }
+            if (test.getLeftFinal().contains(startGameLogic.planet)) {
+                startGameLogic.story1LeftBankList.add(startGameLogic.planet);
+                gamePane.getChildren().remove(plantImage);
+                creatPlant(choosenPlants);
+            }
+
+
+
+            if (test.getBoatFinal().contains(startGameLogic.herbanimal)) {
+                boatRiders.add(startGameLogic.herbanimal);
+                gamePane.getChildren().remove(herbAnimalImage);
+                creatHerbAnimal(choosenHerbAnimal);
+            }
+            if (test.getBoatFinal().contains(startGameLogic.farmer)) {
+                boatRiders.add(startGameLogic.farmer);
+                gamePane.getChildren().remove(farmerImage);
+                creatFarmer(choosenFarmer);
+            }
+            if (test.getBoatFinal().contains(startGameLogic.carnianimal)) {
+                boatRiders.add(startGameLogic.carnianimal);
+                gamePane.getChildren().remove(carnAnimalImage);
+                creatCarnAnimal(choosenCarnAnimal);
+            }
+            if (test.getBoatFinal().contains(startGameLogic.planet)) {
+                boatRiders.add(startGameLogic.planet);
+                gamePane.getChildren().remove(plantImage);
+                creatPlant(choosenPlants);
+            }
+
+            System.out.println("NOW LISTS:: " + startGameLogic.story1RightBankList);
+            System.out.println(boatRiders);
+
+            carnAnimalClicked();
+            plantClicked();
+            FarmerClicked();
+            herbAnimalClicked();
+        }
+    }
     private void setNumberOfMoves(){
         System.out.println("Numberssss:: " + numberOfMoves);
         units.setLayoutX(60);
@@ -518,7 +761,198 @@ public class GameViewManger {
         creatGameLoop();
         gameStage.show();
     }
+    public void creatLoadGame(Stage mainStage) throws ParserConfigurationException, SAXException, IOException {
+
+        ReadFile_XML readfile = new ReadFile_XML();
+        readfile.Read();
+
+        System.out.println("BEFORERight" + startGameLogic.story1RightBankList);
+        System.out.println("Left" + startGameLogic.story1LeftBankList);
+        System.out.println("Boat " + boatRiders);
+        //Emptying lists
+//        startGameLogic.story1RightBankList.remove(startGameLogic.farmer);
+//        startGameLogic.story1RightBankList.remove(startGameLogic.planet);
+//        startGameLogic.story1RightBankList.remove(startGameLogic.herbanimal);
+//        startGameLogic.story1RightBankList.remove(startGameLogic.carnianimal);
+//
+//        startGameLogic.story1LeftBankList.remove(startGameLogic.farmer);
+//        startGameLogic.story1LeftBankList.remove(startGameLogic.planet);
+//        startGameLogic.story1LeftBankList.remove(startGameLogic.herbanimal);
+//        startGameLogic.story1LeftBankList.remove(startGameLogic.carnianimal);
+//
+//        boatRiders.remove(startGameLogic.farmer);
+//        boatRiders.remove(startGameLogic.planet);
+//        boatRiders.remove(startGameLogic.herbanimal);
+//        boatRiders.remove(startGameLogic.carnianimal);
+
+        boatRiders.clear();
+        startGameLogic.story1RightBankList.clear();
+        startGameLogic.story1LeftBankList.clear();
+        numberOfMoves = readfile.getScore();
+        setNumberOfMoves();
+        System.out.println("TYPEEEE>> "+readfile.getType());
+        if(readfile.getType()==1) {
+            if (readfile.getStory1RightList() != null) {
+                System.out.println("LENGTH IN BLA:  " + readfile.getStory1RightList().getLength());
+                for (int i = 0; i < readfile.getStory1RightList().getLength(); i++) {
+                    System.out.println(readfile.getStory1RightList().item(i).getTextContent());
+                    if (readfile.getStory1RightList().item(i).getTextContent().equalsIgnoreCase("Farmer")) {
+                        System.out.println("here");
+                        startGameLogic.story1RightBankList.add(startGameLogic.farmer);
+                    }
+                    if (readfile.getStory1RightList().item(i).getTextContent().equalsIgnoreCase("Planet")) {
+                        startGameLogic.story1RightBankList.add(startGameLogic.planet);
+                        System.out.println("herePP");
+                    }
+                    if (readfile.getStory1RightList().item(i).getTextContent().equalsIgnoreCase("Carnianimal")) {
+                        startGameLogic.story1RightBankList.add(startGameLogic.carnianimal);
+                        System.out.println("hereCC");
+                    }
+                    if (readfile.getStory1RightList().item(i).getTextContent().equalsIgnoreCase("Herbanimal")) {
+                        startGameLogic.story1RightBankList.add(startGameLogic.herbanimal);
+                    }
+                }
+            }
+            if (readfile.getStory1LeftList() != null) {
+                System.out.println("LENGTH IN BLA LEFTT:  " + readfile.getStory1LeftList().getLength());
+                for (int i = 0; i < readfile.getStory1LeftList().getLength(); i++) {
+                    System.out.println(readfile.getStory1LeftList().item(i).getTextContent());
+                    if (readfile.getStory1LeftList().item(i).getTextContent().equalsIgnoreCase("Farmer")) {
+                        startGameLogic.story1LeftBankList.add(startGameLogic.farmer);
+                    }
+                    if (readfile.getStory1LeftList().item(i).getTextContent().equalsIgnoreCase("Planet")) {
+                        startGameLogic.story1LeftBankList.add(startGameLogic.planet);
+                    }
+                    if (readfile.getStory1LeftList().item(i).getTextContent().equalsIgnoreCase("Carnianimal")) {
+                        startGameLogic.story1LeftBankList.add(startGameLogic.carnianimal);
+                    }
+                    if (readfile.getStory1LeftList().item(i).getTextContent().equalsIgnoreCase("Herbanimal")) {
+                        startGameLogic.story1LeftBankList.add(startGameLogic.herbanimal);
+                    }
+                }
+            }
+            if (readfile.getStory1BoatList() != null) {
+                System.out.println("LENGTH IN BLA: BLAA " + readfile.getStory1BoatList().getLength());
+                for (int i = 0; i < readfile.getStory1BoatList().getLength(); i++) {
+                    System.out.println(readfile.getStory1BoatList().item(i).getTextContent());
+                    if (readfile.getStory1BoatList().item(i).getTextContent().equalsIgnoreCase("Farmer")) {
+                        boatRiders.add(startGameLogic.farmer);
+                    }
+                    if (readfile.getStory1BoatList().item(i).getTextContent().equalsIgnoreCase("Planet")) {
+                        boatRiders.add(startGameLogic.planet);
+                    }
+                    if (readfile.getStory1BoatList().item(i).getTextContent().equalsIgnoreCase("Carnianimal")) {
+                        boatRiders.add(startGameLogic.carnianimal);
+                    }
+                    if (readfile.getStory1BoatList().item(i).getTextContent().equalsIgnoreCase("Herbanimal")) {
+                        boatRiders.add(startGameLogic.herbanimal);
+                    }
+                }
+            }
+            System.out.println("WHERE IS THE PROB???? "+readfile.getBoatisOnLeft());
+            if(readfile.getBoatisOnLeft())
+                startGameLogic.setLetsGoButtonClicked(false);
+            else startGameLogic.setLetsGoButtonClicked(true);
+
+            choosenShip = SHIP.valueOf(readfile.getChoosenShip());
+            choosenFarmer = FARMER.valueOf(readfile.getChoosenFarmer());
+            choosenPlants = PLANTS.valueOf(readfile.getChoosenPlants());
+            choosenCarnAnimal = CARNANIMAL.valueOf(readfile.getChoosenCarnAn());
+            choosenHerbAnimal = HERBANIMAL.valueOf(readfile.getChoosenHerbAnimal());
+            System.out.println("I recieved    "+choosenShip);
+            creatNewGame(mainStage,choosenShip,choosenFarmer,choosenHerbAnimal,choosenCarnAnimal,choosenPlants);
+        }
+        else{
+            if (readfile.getStory1RightList() != null) {
+                System.out.println("LENGTH IN BLA:  " + readfile.getStory1RightList().getLength());
+                for (int i = 0; i < readfile.getStory1RightList().getLength(); i++) {
+                    System.out.println(readfile.getStory1RightList().item(i).getTextContent());
+                    if (readfile.getStory1RightList().item(i).getTextContent().equalsIgnoreCase("90.0")) {
+                        System.out.println("here");
+                        startGameLogic.story1RightBankList.add(startGameLogic.farmerA);
+                    }
+                    if (readfile.getStory1RightList().item(i).getTextContent().equalsIgnoreCase("80.0")) {
+                        startGameLogic.story1RightBankList.add(startGameLogic.farmerB);
+                        System.out.println("herePP");
+                    }
+                    if (readfile.getStory1RightList().item(i).getTextContent().equalsIgnoreCase("60.0")) {
+                        startGameLogic.story1RightBankList.add(startGameLogic.farmerC);
+                        System.out.println("hereCC");
+                    }
+                    if (readfile.getStory1RightList().item(i).getTextContent().equalsIgnoreCase("40.0")) {
+                        startGameLogic.story1RightBankList.add(startGameLogic.farmerD);
+                    }
+                    if (readfile.getStory1RightList().item(i).getTextContent().equalsIgnoreCase("20.0")) {
+                        startGameLogic.story1RightBankList.add(startGameLogic.story2herbAnimal);
+                    }
+
+                }
+            }
+            if (readfile.getStory1LeftList() != null) {
+                System.out.println("LENGTH IN BLA LEFTT:  " + readfile.getStory1LeftList().getLength());
+                for (int i = 0; i < readfile.getStory1LeftList().getLength(); i++) {
+                    System.out.println(readfile.getStory1LeftList().item(i).getTextContent());
+                    if (readfile.getStory1LeftList().item(i).getTextContent().equalsIgnoreCase("90.0")) {
+                        System.out.println("here");
+                        startGameLogic.story1LeftBankList.add(startGameLogic.farmerA);
+                    }
+                    if (readfile.getStory1LeftList().item(i).getTextContent().equalsIgnoreCase("80.0")) {
+                        startGameLogic.story1LeftBankList.add(startGameLogic.farmerB);
+                        System.out.println("herePP");
+                    }
+                    if (readfile.getStory1LeftList().item(i).getTextContent().equalsIgnoreCase("60.0")) {
+                        startGameLogic.story1LeftBankList.add(startGameLogic.farmerC);
+                        System.out.println("hereCC");
+                    }
+                    if (readfile.getStory1LeftList().item(i).getTextContent().equalsIgnoreCase("40.0")) {
+                        startGameLogic.story1LeftBankList.add(startGameLogic.farmerD);
+                    }
+                    if (readfile.getStory1LeftList().item(i).getTextContent().equalsIgnoreCase("20.0")) {
+                        startGameLogic.story1LeftBankList.add(startGameLogic.story2herbAnimal);
+                    }
+                }
+            }
+            if (readfile.getStory1BoatList() != null) {
+                System.out.println("LENGTH IN BLA: BLAA " + readfile.getStory1BoatList().getLength());
+                for (int i = 0; i < readfile.getStory1BoatList().getLength(); i++) {
+                    System.out.println(readfile.getStory1BoatList().item(i).getTextContent());
+                    if (readfile.getStory1BoatList().item(i).getTextContent().equalsIgnoreCase("90.0")) {
+                        System.out.println("here");
+                        boatRiders.add(startGameLogic.farmerA);
+                    }
+                    if (readfile.getStory1BoatList().item(i).getTextContent().equalsIgnoreCase("80.0")) {
+                        boatRiders.add(startGameLogic.farmerB);
+                        System.out.println("herePP");
+                    }
+                    if (readfile.getStory1BoatList().item(i).getTextContent().equalsIgnoreCase("60.0")) {
+                        boatRiders.add(startGameLogic.farmerC);
+                        System.out.println("hereCC");
+                    }
+                    if (readfile.getStory1BoatList().item(i).getTextContent().equalsIgnoreCase("40.0")) {
+                        boatRiders.add(startGameLogic.farmerD);
+                    }
+                    if (readfile.getStory1BoatList().item(i).getTextContent().equalsIgnoreCase("20.0")) {
+                        boatRiders.add(startGameLogic.story2herbAnimal);
+                    }
+                }
+            }
+            System.out.println("WHERE IS THE PROB???? "+readfile.getBoatisOnLeft());
+            if(readfile.getBoatisOnLeft())
+                startGameLogic.setLetsGoButtonClicked(false);
+            else startGameLogic.setLetsGoButtonClicked(true);
+
+            choosenShip = SHIP.valueOf(readfile.getChoosenShip());
+            choosenHerbAnimal = HERBANIMAL.valueOf(readfile.getChoosenHerbAnimal());
+            System.out.println("I recieved    "+choosenShip);
+            creatStoryTwoGame(mainStage,choosenShip,choosenHerbAnimal);
+        }
+        System.out.println("***LISTS***");
+        System.out.println("Right" + startGameLogic.story1RightBankList);
+        System.out.println("Left" + startGameLogic.story1LeftBankList);
+        System.out.println("Boat " + boatRiders);
+    }
     private void creatShip(SHIP choosenShip){
+        this.choosenShip = choosenShip;
         idleship = new Image(choosenShip.getUrl());
         reversedShip = new Image(choosenShip.getReversedShipUrl());
         ship = new ImageView(reversedShip);
@@ -531,10 +965,14 @@ public class GameViewManger {
             ship.setFitWidth(250);
             ship.setLayoutY(GAME_HIGHT - 250);
         }
-        ship.setLayoutX(500);
+        System.out.println("WTFFFFF??? "+startGameLogic.isBoatOnTheLeftBank());
+        if(!startGameLogic.isBoatOnTheLeftBank())
+            ship.setLayoutX(500);
+        else ship.setLayoutX(200);
         gamePane.getChildren().addAll(ship);
     }
     private void creatFarmer(FARMER choosenFarmer){
+        this.choosenFarmer = choosenFarmer;
         idleFarmer = new Image(choosenFarmer.getUrl());
         deadFarmer = new Image(choosenFarmer.getDeadFarmerUrl());
         JumpFarmer = new Image(choosenFarmer.getJumpFarmerUrl());
@@ -542,10 +980,20 @@ public class GameViewManger {
         farmerImage.setFitHeight(160);
         farmerImage.setFitWidth(150);
         farmerImage.setLayoutY(GAME_HIGHT - 300);
-        farmerImage.setLayoutX(GAME_WIDTH-150);
+        System.out.println(startGameLogic.story1RightBankList);
+        if(startGameLogic.story1RightBankList.contains(startGameLogic.farmer)) {
+            System.out.println("fe ehh la allah ela allah");
+            farmerImage.setLayoutX(GAME_WIDTH - 150);
+        }
+        else if(startGameLogic.story1LeftBankList.contains(startGameLogic.farmer)){
+            farmerImage.setLayoutX(40);
+        }
+        else
+            farmerImage.setLayoutX(ship.getLayoutX());
         gamePane.getChildren().addAll(farmerImage);
     }
     private void creatHerbAnimal(HERBANIMAL choosenHerbAnimal){
+        this.choosenHerbAnimal = choosenHerbAnimal;
         idleHerbAnimal = new Image(choosenHerbAnimal.getUrl());
         selectedHerbAnimal = new Image(choosenHerbAnimal.getUrlherbSelectedAnimal());
         deadHerbAnimal = new Image(choosenHerbAnimal.getUrlherbDeadAnimal());
@@ -554,15 +1002,23 @@ public class GameViewManger {
         herbAnimalImage.setFitWidth(100);
         if(storyNumber==1){
             herbAnimalImage.setLayoutY(farmerImage.getLayoutY()+50);
-            herbAnimalImage.setLayoutX(carnAnimalImage.getLayoutX() - 80);
+            if(startGameLogic.story1RightBankList.contains(startGameLogic.herbanimal) || startGameLogic.story1RightBankList.contains(startGameLogic.story2herbAnimal))
+                herbAnimalImage.setLayoutX(GAME_WIDTH - 380);
+            else if(startGameLogic.story1LeftBankList.contains(startGameLogic.herbanimal) || startGameLogic.story1LeftBankList.contains(startGameLogic.story2herbAnimal))
+                herbAnimalImage.setLayoutX(40);
+            else
+                herbAnimalImage.setLayoutX(ship.getLayoutX());
+
         }
         else if(storyNumber==2) {
             herbAnimalImage.setLayoutY(GAME_HIGHT - 230);
-            herbAnimalImage.setLayoutX(GAME_WIDTH - 110);
+            if(startGameLogic.story1RightBankList.contains(startGameLogic.story2herbAnimal))
+                herbAnimalImage.setLayoutX(GAME_WIDTH - 110);
         }
         gamePane.getChildren().addAll(herbAnimalImage);
     }
     private void creatCarnAnimal(CARNANIMAL choosenCarnAnimal){
+        this.choosenCarnAnimal = choosenCarnAnimal;
         idleCarnAnimal = new Image(choosenCarnAnimal.getUrl());
         selectedCarnAnimal = new Image(choosenCarnAnimal.getUrlherbSelectedAnimal());
         deadCarnAnimal = new Image(choosenCarnAnimal.getUrlherbDeadAnimal());
@@ -570,17 +1026,28 @@ public class GameViewManger {
         carnAnimalImage.setFitHeight(200);
         carnAnimalImage.setFitWidth(200);
         carnAnimalImage.setLayoutY(farmerImage.getLayoutY()-30);
-        carnAnimalImage.setLayoutX(farmerImage.getLayoutX() - 150);
+        if(startGameLogic.story1RightBankList.contains(startGameLogic.carnianimal))
+            carnAnimalImage.setLayoutX(GAME_WIDTH - 300);
+        else if(startGameLogic.story1LeftBankList.contains(startGameLogic.carnianimal))
+            carnAnimalImage.setLayoutX(70);
+        else
+            carnAnimalImage.setLayoutX(ship.getLayoutX());
         gamePane.getChildren().addAll(carnAnimalImage);
     }
     private void creatPlant(PLANTS choosenPlant){
+        this.choosenPlants = choosenPlant;
         plant = new Image(choosenPlant.getUrl());
         eatenPlant = new Image(choosenPlant.getUrlEatenPlant());
         plantImage = new ImageView(plant);
         plantImage.setFitHeight(100);
         plantImage.setFitWidth(100);
         plantImage.setLayoutY(farmerImage.getLayoutY()+50);
-        plantImage.setLayoutX(herbAnimalImage.getLayoutX() - 80);
+        if(startGameLogic.story1RightBankList.contains(startGameLogic.planet))
+            plantImage.setLayoutX(GAME_WIDTH - 380 - 80);
+        else if(startGameLogic.story1LeftBankList.contains(startGameLogic.planet))
+            plantImage.setLayoutX(5);
+        else
+            plantImage.setLayoutX(ship.getLayoutX());
         gamePane.getChildren().addAll(plantImage);
     }
     private void creatGameLoop(){
@@ -1944,7 +2411,58 @@ public class GameViewManger {
         backgroundImage3.setFitWidth(1250);
         backgroundImage3.setLayoutY(300);
         backgroundImage3.setFitHeight(400);
-        gamePane.getChildren().addAll(backgroundImage3,createLetsGoButton(),saveButton,redoButton,undoButton,backButton,units,Tenth);
+
+        gamePane.getChildren().addAll(backgroundImage3,createLetsGoButton(),saveButton,redoButton,undoButton,
+                backButton,units,Tenth,getReady,helpButton);
+    }
+    private void creatHelpSubScene(){
+        Stage helpStage = new Stage();
+        helpStage.initModality(Modality.APPLICATION_MODAL);
+        helpStage.initStyle(StageStyle.TRANSPARENT);
+        AnchorPane root = new AnchorPane();
+
+        int HELPHIGHT = 600;
+        int HELPWIDTH = 400;
+        GridPane helpLayout = new GridPane();
+        helpLayout.setPadding(new Insets(20, 20, 20, 20)); //Setting gaps in corners
+        helpLayout.setVgap(8);
+        helpLayout.setHgap(10);
+
+        BackgroundImage image = new BackgroundImage(new Image(GameOVERBACKGROUND_IMAGE,HELPWIDTH,HELPHIGHT,false,true),
+                BackgroundRepeat.NO_REPEAT,BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT,null);
+
+        closeHelp = new ImageView("view/resources/Exit.png");
+        closeHelp.setFitHeight(50);
+        closeHelp.setFitWidth(50);
+        closeHelp.setLayoutX(20);
+        closeHelp.setLayoutY(20);
+        if(storyNumber==1)
+            helptxt = new Label("Rules: \n\nThe farmer is the only one \nwho can sail the boat.\nHe can only take\none passenger, " +
+                    "\nin addition to himself.\n" +
+                    "\nYou can not leave any \ntwo crossers on \nthe same bank \nif they can harm(eat) \neach other");
+        else
+            helptxt = new Label("Rules: \n\n\nThe boat cannot bear\na load heavier than \n100 kg.\n\n\n" +
+                    "All farmers can raft, \nwhile the animal \ncannot.");
+        helptxt.setStyle("-fx-text-fill: #000;-fx-font-size: 26px; font-weight: bold");
+        helptxt.setLayoutX(40);
+        helptxt.setLayoutY(100);
+        root.setBackground(new Background(image));
+
+        closeHelp.setOnMouseClicked(e->{
+            helpStage.close();
+        });
+
+        closeHelp.setOnMouseEntered(e->{
+            closeHelp.setEffect(new DropShadow());
+        });
+        closeHelp.setOnMouseExited(e->{
+            closeHelp.setEffect(null);
+        });
+
+        root.getChildren().addAll(closeHelp,helptxt);
+        helpScene = new Scene(root, HELPWIDTH,HELPHIGHT);
+        helpStage.setScene(helpScene);
+        helpStage.showAndWait();
     }
 
     private void moveBackground(){
@@ -1965,7 +2483,11 @@ public class GameViewManger {
         farmerA = new ImageView(idleFarmerA);
         farmerA.setFitHeight(120);
         farmerA.setFitWidth(120);
-        farmerA.setLayoutX(GAME_WIDTH - 220);
+        if(startGameLogic.story1RightBankList.contains(startGameLogic.farmerA))
+            farmerA.setLayoutX(GAME_WIDTH - 220);
+        else if(startGameLogic.story1LeftBankList.contains(startGameLogic.farmerA))
+            farmerA.setLayoutX(60);
+        else farmerA.setLayoutX(ship.getLayoutX());
         farmerA.setLayoutY(GAME_HIGHT-250);
         gamePane.getChildren().add(farmerA);
     }
@@ -1975,7 +2497,11 @@ public class GameViewManger {
         farmerB = new ImageView(idleFarmerB);
         farmerB.setFitHeight(120);
         farmerB.setFitWidth(120);
-        farmerB.setLayoutX(GAME_WIDTH - 320);
+        if(startGameLogic.story1RightBankList.contains(startGameLogic.farmerB))
+            farmerB.setLayoutX(GAME_WIDTH - 320);
+        else if(startGameLogic.story1RightBankList.contains(startGameLogic.farmerB))
+            farmerB.setLayoutX(40);
+        else farmerB.setLayoutX(ship.getLayoutX());
         farmerB.setLayoutY(farmerA.getLayoutY());
         gamePane.getChildren().add(farmerB);
     }
@@ -1985,17 +2511,27 @@ public class GameViewManger {
         farmerC = new ImageView(idleFarmerC);
         farmerC.setFitHeight(120);
         farmerC.setFitWidth(120);
-        farmerC.setLayoutX(GAME_WIDTH - 420);
+        if(startGameLogic.story1RightBankList.contains(startGameLogic.farmerC))
+            farmerC.setLayoutX(GAME_WIDTH - 420);
+        else if(startGameLogic.story1LeftBankList.contains(startGameLogic.farmerC))
+            farmerC.setLayoutX(25);
+        else farmerC.setLayoutX(ship.getLayoutX());
+
         farmerC.setLayoutY(farmerA.getLayoutY());
         gamePane.getChildren().add(farmerC);
     }
     private void creatFarmerD(){
+        System.out.println("CRATTTINGGGGGGGGGGGGGGGGGGGGGGGGGG");
         idleFarmerD = new Image("view/resources/fourFarmer/soldier_idle.png");
         JumpFarmerD = new Image("view/resources/fourFarmer/soldier_jump.png");
         farmerD = new ImageView(idleFarmerD);
         farmerD.setFitHeight(120);
         farmerD.setFitWidth(120);
-        farmerD.setLayoutX(GAME_WIDTH - 520);
+        if(startGameLogic.story1RightBankList.contains(startGameLogic.farmerD))
+            farmerD.setLayoutX(GAME_WIDTH - 520);
+        else if(startGameLogic.story1LeftBankList.contains(startGameLogic.farmerD))
+            farmerD.setLayoutX(10);
+        else farmerD.setLayoutX(ship.getLayoutX());
         farmerD.setLayoutY(farmerA.getLayoutY());
         gamePane.getChildren().add(farmerD);
     }

@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Data xmlns="alyelshwahy@yahoo.com">
   <user1 STORYCASE="1">
-    <ListRight>Farmer</ListRight>
     <ListRight>planet</ListRight>
     <ListRight>Carnianimal</ListRight>
-    <ListRight>Herbanimal</ListRight>
-    <ListBoat>empty</ListBoat>
-    <Scores>0</Scores>
-    <ISLEFT>true</ISLEFT>
+    <ListLeft>Herbanimal</ListLeft>
+    <ListBoat>Farmer</ListBoat>
+    <choosenShip>Wreck</choosenShip>
+    <choosenFarmer>GIRL</choosenFarmer>
+    <choosenHerb>RABBIT</choosenHerb>
+    <choosenCarn>WILDCAT</choosenCarn>
+    <choosenPlants>TREE</choosenPlants>
+    <Scores>4</Scores>
+    <ISLEFT>false</ISLEFT>
   </user1>
 </Data>

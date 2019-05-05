@@ -4,6 +4,12 @@ import java.awt.image.BufferedImage;
 
 public class Carnianimal implements ICrosser {
     double weight;
+
+    int rank;
+    boolean CanS ;
+    String label;
+    private Carnianimal instance;
+    BufferedImage x[];
     public Carnianimal (double weight ){
         this.weight = weight;
     }
@@ -24,11 +30,16 @@ public class Carnianimal implements ICrosser {
     }
 
     public ICrosser makeCopy() {
-        return null;
+        instance.rank = rank;
+        instance.weight = getWeight();
+        instance.label = getLabelToBeShown();
+        instance.CanS = false;
+        instance.getImages();
+        return instance;
     }
 
     public void setLabelToBeShown(String label) {
-
+this.label =label;
     }
 
     public String getLabelToBeShown() {
